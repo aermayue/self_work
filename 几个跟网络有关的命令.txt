@@ -1,0 +1,6 @@
+几个网络有关的命令：
+1.windows的TRACERT  ，可参见：http://www.urbansh.com/tracert.html
+
+2.linux的 traceroute, 可参见：http://www.cnblogs.com/peida/archive/2013/03/07/2947326.html
+
+3.nslookup:，可参见：http://roclinux.cn/?p=2441

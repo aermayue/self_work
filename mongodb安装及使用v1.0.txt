@@ -1,0 +1,184 @@
+mongodb安装及使用
+1、centos下的安装
+下载源文件
+mkdir -p /usr/local/src
+cd /usr/local/src
+wget https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-3.0.4.tgz
+tar -zxvf mongodb-linux-x86_64-3.0.4.tgz -C /usr/local/
+cd /usr/local/
+mv mongodb-linux-x86_64-3.0.4 mongodb
+配置path环境变量
+vim /etc/profile
+export MONGODB_HOME=/usr/local/mongodb
+export PATH=$MONGODB_HOME/bin:$PATH
+source /etc/profile
+echo $PATH
+mongod -version
+建立存储数据及日志目录
+mkdir -p /var/mongodb/data/
+mkdir -p /var/mongodb/logs/
+touch /var/mongodb/logs/mongodb.log
+建立配置文件
+vim /etc/mongodb.conf
+	输入并保存：
+	dbpath=/var/mongodb/data
+	logpath=/var/mongodb/logs/mongodb.log
+	logappend=true
+	port=27017
+	fork=true
+添加mongodb用户及设置权限
+useradd mongodb -M -s /sbin/nologin
+chown -R mongodb:mongodb /var/mongodb
+设置开机启动（方法1）
+vim /etc/rc.d/rc.local
+/usr/local/mongodb/bin/mongod --dbpath /var/mongodb/data/ --logpath /var/mongodb/logs/mongodb.log --port 27017 --smallfiles --fork
+测试
+mongo admin
+->show dbs;
+
+2、mongodb命令行使用
+导入数据：mongoimport --db test --collection restaurants --drop --file primer-dataset.json
+创建数据库不是必要的 use test 就相当于是创建了
+删除库：use test;db.dropDatabase();
+创建固定大小的collection：db.createCollection("mycoll", {capped:true, size:100000})#字节
+插入数据： 
+	use test
+	db.restaurants.insert(
+	   {
+		  "address" : {
+			 "street" : "2 Avenue",
+			 "zipcode" : "10075",
+			 "building" : "1480",
+			 "coord" : [ -73.9557413, 40.7720266 ],
+		  },
+		  "borough" : "Manhattan",
+		  "cuisine" : "Italian",
+		  "grades" : [
+			 {
+				"date" : ISODate("2014-10-01T00:00:00Z"),
+				"grade" : "A",
+				"score" : 11
+			 },
+			 {
+				"date" : ISODate("2014-01-16T00:00:00Z"),
+				"grade" : "B",
+				"score" : 17
+			 }
+		  ],
+		  "name" : "Vella",
+		  "restaurant_id" : "41704620"
+	   }
+	)
+查找数据：
+	查找全部：db.restaurants.find()
+	按条件查找：
+		db.restaurants.find( { "borough": "Manhattan" } )
+		db.restaurants.find( { "address.zipcode": "10075" } )
+		db.rest.find( { "grades.score": { $gt: 30 } } )
+		db.rest.find( { "cuisine": "china", "name": "cwh" } )	AND逻辑
+		db.rest.find(
+			{ $or: [ { "cuisine": "Italian" }, { "name": "cwh" } ] }	OR逻辑
+		)
+		db.rest.find().sort( {"address.zipcode": -1 } )			1升序，-1降序
+更新数据：
+	更改单个：
+		db.restaurants.update(
+			{ "name" : "Juni" },
+			{
+			  $set: { "cuisine": "American (New)" },
+			  $currentDate: { "lastModified": true }		#更新最后的修改时间
+			}
+		)
+	更改多个：
+		db.restaurants.update(
+		  { "address.zipcode": "10016", cuisine: "Other" },
+		  {
+			$set: { cuisine: "Category To Be Determined" },
+			$currentDate: { "lastModified": true }
+		  },
+		  { multi: true}
+		)
+	替换：
+		db.rest.update(										#替换后只会保留唯一的_id
+		   { "restaurant_id" : "41704622" },
+		   {
+			 "name" : "xlf",
+			 "address" : {
+					  "coord" : [ -73.9557413, 40.7720266 ],
+					  "building" : "1480",
+					  "street" : "Bao An Road",
+					  "zipcode" : "12346"
+			 }
+		   }
+		)
+删除数据：
+	按条件删除：
+		db.restaurants.remove( { "borough": "Manhattan" } )
+	只删除一条记录：
+		db.restaurants.remove( { "borough": "Queens" }, { justOne: true } )
+	删除集合里面所有文档：
+		db.restaurants.remove( { } )
+	删除集合及索引：
+		db.restaurants.drop()
+查询分组：
+	db.restaurants.aggregate(
+	   [
+		 { $group: { "_id": "$borough", "count": { $sum: 1 } } }	#对borough进行分组并统计数量
+	   ]
+	);
+	db.restaurants.aggregate(
+	   [
+		 { $match: { "borough": "Queens", "cuisine": "Brazilian" } },#分组条件 
+		 { $group: { "_id": "$address.zipcode" , "count": { $sum: 1 } } }
+	   ]
+	);
+创建索引：
+	db.restaurants.createIndex( { "cuisine": 1 } )		创建单个索引
+	db.restaurants.createIndex( { "cuisine": 1, "address.zipcode": -1 } )		创建复合索引
+备份：
+	mongodump -h127.0.0.1 -p27017  -d test -o /var/cwh/		#备份库test到目录 /var/cwh/ 下面
+恢复：
+	mongorestore -h127.0.0.1 -p27017  -d test  /var/cwh/test
+	
+
+3、PHP安装MongoDB扩展
+
+$ tar zxvf mongodb-mongodb-php-driver-<commit_id>.tar.gz
+$ cd mongodb-mongodb-php-driver-<commit_id>
+$ /usr/local/php/bin/phpize
+$ ./configure --with-php-config=/usr/local/php/bin/php-config
+$ make & make install
+
+php.ini添加：
+extension=mongo.so
+
+4、MongoDB php API
+SQL语句到对应的表：http://php.net/manual/zh/mongo.sqltomongo.php
+常用如下：
+#连接		$m = new MongoClient();							
+#选择mydb库		$db = $m->mydb;					
+#创建集合mycol	$collection = $db->createCollection("mycol");
+#插入文档		$collection->insert($document); $document为array
+#查找所有		 $cursor = $collection->find();
+#更新文档	 $collection->update(array("title"=>"MongoDB"), array('$set'=>array("title"=>"MongoDBtt")));
+读取首选项，有5种模式，根据应用程序的要求，选取不同的读模式
+Write Concerns：http://kyfxbl.iteye.com/blog/1952941 控制写操作
+
+5、texas项目mongodb的使用（等待中）
+
+6、mongodb的安全性问题
+自带的rest接口、脚本注入等，http://drops.wooyun.org/papers/850
+更多，可看：http://docs.mongodb.org/manual/security/
+
+7、如何合理地设计集合与文档（待定）
+
+
+8、mongodb性能监控及排错
+索引优化：explain()
+mongostat ：参考文档如下：
+		http://blog.csdn.net/gardener_db/article/details/7432888   
+		http://www.cnblogs.com/renyb/archive/2013/01/18/2866632.html（个别方法需自测）
+mongotop
+
+9、主从、集群配置（待定）
+

@@ -1,0 +1,65 @@
+
+http://www.linuxidc.com/Linux/2014-08/105682.htm
+
+
+ifcfg-enp0s10
+ifcfg-enp0s3
+ifcfg-enp0s8
+ifcfg-enp0s9
+
+
+ifcfg-enp0s9
+
+ifcfg-enp0s8
+
+http://www.nikest.com/web/jswd/2015/0320/151494.html
+
+
+ip addr 
+ifcfg-enp0s3 ：08:00:27:8d:92:e1
+ifcfg-enp0s8 : 08:00:27:44:be:5a
+
+导入的centos虚拟机如何成功联网
+可以会出现的问题：“job for network.service failed”
+1.导入虚拟介质文件时，可以选择初始化所有mac地址，
+2.执行 ip addr  将ifcfg-enp0s3 ：08:00:27:8d:92:e1  与ifcfg-enp0s8 : 08:00:27:44:be:5a 的mac地址记录下来（即将网卡的mac地址记录下来，后面有用到）
+3.cd /etc/sysconfig/network-scripts/
+4. 配置两个网卡，如下：（这一步要注意将onboot=yes 并且需设置好上步保留的mac地址）
+	网卡1：
+		[root@vm network-scripts]# cat ifcfg-eth0
+		# Intel Corporation 82540EM Gigabit Ethernet Controller
+		DEVICE=eth0
+		BOOTPROTO=dhcp
+		HWADDR=08:00:27:AF:00:80
+		ONBOOT=yes
+		TYPE=Ethernet
+		
+	网卡2：
+		# Please read /usr/share/doc/initscripts-*/sysconfig.txt
+		# for the documentation of these parameters.
+		TYPE=Ethernet
+		DEVICE=eth1
+		HWADDR=08:00:27:57:ba:ae
+		ONBOOT=yes
+		BOOTPROTO=static
+		IPADDR=192.168.56.101
+		NETMAST=255.255.255.0
+5.reboot
+Restarting network (via systemctl):  Job for network.service failed. See 'systemctl status network.service' and 'journalctl -xn' for details.
+
+enp0s3:08:00:27:0d:65:4a
+enp0s8:08:00:27:cf:a8:01
+
+sftp -oPort=60001 root@192.168.0.254
+
+//////////////////////////////////这个是另一个话题 ////////
+http://linux.it.net.cn/e/server/iptables/2014/0917/5093.html
+
+
+centos 7有哪些不同   网卡  iptables
+
+centos7的一些新特性
+
+centos7下firewall的使用：http://havee.me/linux/2015-01/using-firewalls-on-centos-7.html
+http://segmentfault.com/a/1190000003931716
+https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Security_Guide/sec-Using_Firewalls.html#sec-Configuring_the_Firewall

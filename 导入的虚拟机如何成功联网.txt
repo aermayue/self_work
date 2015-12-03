@@ -23,6 +23,9 @@ ifcfg-enp0s8 : 08:00:27:44:be:5a
 可以会出现的问题：“job for network.service failed”
 1.导入虚拟介质文件时，可以选择初始化所有mac地址，
 2.执行 ip addr  将ifcfg-enp0s3 ：08:00:27:8d:92:e1  与ifcfg-enp0s8 : 08:00:27:44:be:5a 的mac地址记录下来（即将网卡的mac地址记录下来，后面有用到）
+08:00:27:af:00:80  
+08:00:27:57:ba:ae 
+
 3.cd /etc/sysconfig/network-scripts/
 4. 配置两个网卡，如下：（这一步要注意将onboot=yes 并且需设置好上步保留的mac地址）
 	网卡1：

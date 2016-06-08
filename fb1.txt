@@ -1,0 +1,86 @@
+
+1、如何升级
+安装：
+Composer安装
+手动直接下载安装，下载地址：https://github.com/facebook/facebook-php-sdk-v4/archive/5.0.0.zip
+texas项目中是解压到了 /lib/platform/facebook/srcV5 这个路径下了。之前的版本项目中是通过/lib/platform/facebook/facebook_v2.php,来实现外部的调用访问。
+这版是通过/lib/platform/facebook/facebook_v5.php来实现，并且保留了facebook_v2.php里面的大部份方法
+
+基本使用
+//Facebook.class.php ties all the components of the SDK together in a nice little API
+$fb = new Facebook\Facebook([
+  'app_id'     => '{app-id}',
+  'app_secret' => '{app-secret}',
+  'default_graph_version' => 'v2.6',
+  ]);
+
+//Getting an access token from redirect
+$fb = new Facebook\Facebook([/* . . . */]);
+$helper = $fb->getRedirectLoginHelper();
+ $accessToken = $helper->getAccessToken();
+
+ //Getting Access Tokens From App Canvas/Page Tabs
+ $fb = new Facebook\Facebook([/* . . . */]);
+$helper = $fb->getCanvasHelper();
+$accessToken = $helper->getAccessToken();
+
+//Getting Access Tokens From The JavaScript SDK
+$fb = new Facebook\Facebook([/* . . . */]);
+$helper = $fb->getJavaScriptHelper();
+ $accessToken = $helper->getAccessToken();
+//Requests and Responses
+ # v5 with default access token fallback
+$fb = new Facebook\Facebook([/* . . . */]);
+$fb->setDefaultAccessToken('{access-token}');
+
+# These will fall back to the default access token
+$response = $fb->get('/me');
+$response = $fb->post('/me/feed', $data);
+$response = $fb->delete('/123', $data);
+# v5 response example
+$fb = new Facebook\Facebook([/* . . . */]);
+$response = $fb->get('/me');
+var_dump($response->getDecodedBody());
+#// array(10) { ...
+ 
+//file or videos uploads,support batch requests
+# v5 photo upload example
+$fb = new Facebook\Facebook([/* . . . */]);
+
+$data = [
+  'source' => $fb->fileToUpload('/path/to/photo.jpg'),
+  'message' => 'My file!',
+  ];
+
+$response = $fb->post('/me/photos', $data, '{access-token}');
+//实例：
+$langtype = 4;
+$fb = oo::pfacebook( $langtype )->op;
+$accessToken = $fb->getAccessToken();
+p($accessToken);
+$data = [
+  'source' => $fb->fileToUpload(PATH_DAT.'/tt.jpg'),
+  'message' => 'My file!',
+  ];
+$response = $fb->post('/me/photos', $data, $accessToken);
+var_dump($response);
+2、有哪些新特性
+
+
+3、oauth2.0
+
+4、涉及代码：
+api/facebook/user.php
+includes/superaccount/emailvalid.php
+includes/superaccount/index.php
+model/notice.php
+lib/platform/class.pfacebook.php
+lib/platform/facebook/facebook_v5.php
+lib/platform/facebook/srcV5/
+lib/platform/facebook/autoload.php
+lib/class.fbucenter.php
+
+默认权限：https://developers.facebook.com/docs/facebook-login/permissions
+应用开发：https://developers.facebook.com/docs/apps
+
+爬虫：https://developers.facebook.com/docs/sharing/webmasters/crawler

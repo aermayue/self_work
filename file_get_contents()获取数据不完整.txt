@@ -1,0 +1,45 @@
+file_get_contents()获取数据不完整
+
+参考链接：https://segmentfault.com/q/1010000002784279
+问题表象及原因：file_get_contents()获取数据不完整，导致json格式不对，php json_decode()解析出错
+解决办法：
+默认file_get_contents()并没有告诉服务器支持gzip解压缩，所以请求的时候加上就可，代码如下：
+	$pay_sid = 4;
+	$pay_appid = 32;
+	$rand = time();
+	$key = md5('interface_getnprds' . $rand);
+	$api = 'http://paycms.oa.com/pInterface/getProducts?verify=' . $key . '&rand=' . $rand . '&sid=' . $pay_sid . '&appid=' . $pay_appid . '&use_status=0';
+	$opts = array (
+		'http' => array (
+			'method' => 'GET',
+			'header'=> "Accept-Encoding: gzip, deflate, sdch\r\n"//在请求的时候告诉服务器支持解Gzip压缩的内容
+		)
+	);
+	$context = stream_context_create($opts);
+	$str = file_get_contents("compress.zlib://".$api,false, $context);
+	var_dump($str);die;
+	
+或
+
+$pay_sid = 4;
+$pay_appid = 32;
+$rand = time();
+$key = md5('interface_getnprds' . $rand);
+$api = 'http://paycms.oa.com/pInterface/getProducts?verify=' . $key . '&rand=' . $rand . '&sid=' . $pay_sid . '&appid=' . $pay_appid . '&use_status=0';
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $api);
+curl_setopt($ch, CURLOPT_ENCODING,'gzip');
+curl_setopt($ch, CURLOPT_HEADER, 0);
+curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$ret = curl_exec($ch);
+$errno = curl_errno($ch);
+$error = curl_error($ch);
+//var_dump($errno);
+//var_dump($error);
+curl_close($ch);
+//var_dump($ret);
+$arr = json_decode($ret, true);
+var_dump($arr);
+
+另一链接：curl: (18) transfer closed with outstanding read data remaining 原因分析（http://blog.csdn.net/delphiwcdj/article/details/51095945）
